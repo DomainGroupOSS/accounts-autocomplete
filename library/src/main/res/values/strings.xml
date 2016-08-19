@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">library</string>
+    <string name="allow_accounts_suggestion">Allow suggestions</string>
+</resources>
