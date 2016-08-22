@@ -64,6 +64,7 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
     private AutoCompleteTextView mAccountsAutocomplete;
 
     private int mThreshold;
+    private String mCurrentText;
 
     public AccountsAutoCompleteTextView(Context context) {
         super(context);
@@ -109,7 +110,10 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
+                String currentText = charSequence.toString();
+                if (!currentText.equalsIgnoreCase(getContext().getString(R.string.allow_accounts_suggestion))) {
+                    mCurrentText = charSequence.toString();
+                }
             }
 
             @Override
@@ -186,10 +190,12 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
     }
 
     private void setAskAccountsAutoComplete(final Context context) {
+        // This is called *after* the system has done a `replaceText()`
         mAccountsAutocomplete.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                mAccountsAutocomplete.setText("");
+                mAccountsAutocomplete.setText(mCurrentText);
+                mAccountsAutocomplete.setSelection(mCurrentText.length());
                 hideSoftKeyboard(context, AccountsAutoCompleteTextView.this.getWindowToken());
 
                 if (mActivity == null && mFragment == null) {
@@ -218,9 +224,26 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
         if (granted) {
             setAccountOptions();
             mAccountsAutocomplete.showDropDown();
+        } else {
+
+            if (mActivity == null && mFragment == null) {
+                throw new IllegalStateException("No calling Activity or Fragment declared. Call either setParentActivity() or setParentFragment().");
+            }
+
+            boolean shouldShowRationale;
+            // This will return TRUE if te user has previously denied a request
+            // On subsequent times that we request the permission and the user chooses "Don't ask again", it will return FALSE
+            if (mActivity != null) {
+                shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(mActivity, Manifest.permission.GET_ACCOUNTS);
+            } else {
+                shouldShowRationale = mFragment.shouldShowRequestPermissionRationale(Manifest.permission.GET_ACCOUNTS);
+            }
+
+            if (!shouldShowRationale) {
+                mAccountsAutocomplete.setAdapter(mAdapter = null);
+            }
         }
     }
-
 
     private void setChosenAccountName(@NonNull String accountName) {
         mAccountsAutocomplete.setText(accountName);
