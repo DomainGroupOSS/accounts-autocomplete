@@ -231,13 +231,16 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
 
     private List<String> getGoogleAccountEmails(Context context) {
         List<String> emails = new ArrayList<>();
-        Account[] accounts = AccountManager.get(context).getAccountsByType(GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE);
-        for (Account account : accounts) {
-            if (android.util.Patterns.EMAIL_ADDRESS.matcher(account.name).matches()) {
-                emails.add(account.name);
+        if (isPermissionGranted()) {
+            //noinspection MissingPermission isPermission() is doing the check required by lint
+            Account[] accounts = AccountManager.get(context).getAccountsByType(GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE);
+            for (Account account : accounts) {
+                if (android.util.Patterns.EMAIL_ADDRESS.matcher(account.name).matches()) {
+                    emails.add(account.name);
+                }
             }
+            Collections.sort(emails, String.CASE_INSENSITIVE_ORDER);
         }
-        Collections.sort(emails, String.CASE_INSENSITIVE_ORDER);
         return emails;
     }
 
