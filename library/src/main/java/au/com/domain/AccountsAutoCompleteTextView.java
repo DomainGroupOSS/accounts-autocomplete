@@ -32,6 +32,7 @@ import com.google.android.gms.auth.GoogleAuthUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import au.com.domain.library.R;
@@ -73,7 +74,7 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
             setHint("Email");
         }
 
-        // TODO Make this a custom attr
+        // TODO Make this a custom attr (currently does nothing)
         mThreshold = mAccountsAutocomplete.getThreshold();
 
         setAccountOptions();
@@ -221,6 +222,7 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
                 emails.add(account.name);
             }
         }
+        Collections.sort(emails, String.CASE_INSENSITIVE_ORDER);
         return emails;
     }
 

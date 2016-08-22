@@ -26,14 +26,14 @@ public class MainActivity extends AppCompatActivity {
         mAutoCompleteWithPrefill.setParentActivity(this);
 
         List<String> emailOptions = new ArrayList<>();
-        emailOptions.add("Email 1");
-        emailOptions.add("Email 2");
-        emailOptions.add("Email 3");
+        emailOptions.add("my_email@gmail.com");
+        emailOptions.add("feedback@domain.com.au");
         mAutoCompleteWithPrefill.setEmailOptions(emailOptions, true);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         mAccountsAutoCompleteTextView.onPermissionResponse(requestCode, permissions, grantResults);
+        mAutoCompleteWithPrefill.onPermissionResponse(requestCode, permissions, grantResults);
     }
 }
