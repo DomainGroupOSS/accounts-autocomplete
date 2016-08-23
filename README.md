@@ -34,8 +34,8 @@ mAccountsAutoCompleteTextView.setParentFragment(this);
 You would then need to override the `onRequestPermissionsResult` callback:
 ```java
 @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        mAccountsAutoCompleteTextView.onPermissionResponse(requestCode, permissions, grantResults);
-    }
+public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    mAccountsAutoCompleteTextView.onPermissionResponse(requestCode, permissions, grantResults);
+}
 ```
 
