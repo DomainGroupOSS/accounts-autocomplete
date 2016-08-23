@@ -10,7 +10,19 @@ After permission is granted:
 ![With Suggestions](website/suggestions_dropdown.png)
 
 ## Usage
-Drop in `au.com.domain.AccountsAutoCompleteTextView` in your layout and set it up in the `Activity`:
+```
+compile 'au.com.domain:accounts-autocomplete:1.0.0'
+```
+
+Drop in `au.com.domain.AccountsAutoCompleteTextView` in your layout:
+```
+<au.com.domain.AccountsAutoCompleteTextView
+        android:id="@+id/accounts_autocomplete"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+```
+
+and set it up in the `Activity`:
 ```java
 mAccountsAutoCompleteTextView.setParentActivity(this);
 ```
@@ -27,4 +39,3 @@ You would then need to override the `onRequestPermissionsResult` callback:
     }
 ```
 
-And that's it.
