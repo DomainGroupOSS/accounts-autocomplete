@@ -21,6 +21,7 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.TypedArray;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -58,6 +59,7 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
 
     private List<String> mEmails;
     private List<String> mPriorityList;
+    private List<String> mNonPriorityList;
     private boolean mAllowPrefill;
     private ArrayAdapter<String> mAdapter;
     private Activity mActivity;
@@ -70,20 +72,31 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
 
     public AccountsAutoCompleteTextView(Context context) {
         super(context);
-        init(context);
+        init(context, null);
     }
 
     public AccountsAutoCompleteTextView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(context);
+        init(context, attrs);
     }
 
     public AccountsAutoCompleteTextView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init(context);
+        init(context, attrs);
     }
 
-    private void init(Context context) {
+    private void init(Context context, AttributeSet attrs) {
+        if (attrs != null) {
+            TypedArray a = getContext().getTheme().obtainStyledAttributes(attrs,
+                    R.styleable.AccountsAutoCompleteTextView,
+                    0, 0);
+            try {
+                mThreshold = a.getInteger(R.styleable.AccountsAutoCompleteTextView_accountsCompletionThreshold, 0);
+            } finally {
+                a.recycle();
+            }
+        }
+
         addView(mAccountsAutocomplete = new AutoCompleteTextView(context));
         mAccountsAutocomplete.setImeOptions(EditorInfo.IME_ACTION_NEXT);
         mAccountsAutocomplete.setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
@@ -91,9 +104,6 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
         if (TextUtils.isEmpty(getHint())) {
             setHint("Email");
         }
-
-        // TODO Make this a custom attr (currently does nothing)
-        mThreshold = mAccountsAutocomplete.getThreshold();
 
         setAccountOptions();
         mAccountsAutocomplete.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -114,7 +124,7 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
                 String currentText = charSequence.toString();
                 if (!currentText.equalsIgnoreCase(getContext().getString(R.string.allow_accounts_suggestion))) {
-                    mCurrentText = charSequence.toString();
+                    mCurrentText = currentText;
                 }
             }
 
@@ -144,13 +154,11 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
             //Create adapter to tell the AutoCompleteTextView what to show in its dropdown list.
             mAdapter = new ArrayAdapter<>(context, android.R.layout.simple_dropdown_item_1line, mEmails);
             mAccountsAutocomplete.setOnItemClickListener(null);
-            if (mAccountsAutocomplete.getThreshold() < 2) {
-                mAccountsAutocomplete.setThreshold(mThreshold);
-            }
+            mAccountsAutocomplete.setThreshold(mThreshold);
         } else {
             final List<String> names = Arrays.asList(context.getString(R.string.allow_accounts_suggestion));
             mAdapter = new AccountsAdapter(context, android.R.layout.simple_dropdown_item_1line, names);
-            mAccountsAutocomplete.setThreshold(1);
+            mAccountsAutocomplete.setThreshold(0);
             setAskAccountsAutoComplete(context);
         }
 
@@ -178,6 +186,16 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
         setAccountOptions();
     }
 
+    /**
+     * Exactly ike {@link #setEmailOptions(List, boolean)}, but better named.
+     *
+     * @param emailOptions
+     * @param allowPrefill
+     */
+    public void setPriorityList(@Nullable List<String> emailOptions, boolean allowPrefill){
+        setEmailOptions(emailOptions, allowPrefill);
+    }
+
     public void setParentActivity(Activity activity) {
         mActivity = activity;
     }
@@ -187,8 +205,7 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
     }
 
     public void addDropdownOptions(List<String> options) {
-        mEmails.addAll(options);
-        mAdapter.notifyDataSetChanged();
+        setPriorityList(options, false);
     }
 
     private void setAskAccountsAutoComplete(final Context context) {
@@ -250,7 +267,6 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
                 setAccountOptions();
                 mAccountsAutocomplete.showDropDown();
             } else {
-
                 if (mActivity == null && mFragment == null) {
                     throw new IllegalStateException("No calling Activity or Fragment declared. Call either setParentActivity() or setParentFragment().");
                 }
@@ -318,6 +334,15 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
     public void setError(@Nullable CharSequence error) {
         setErrorEnabled(true);
         super.setError(error);
+    }
+
+    public void setAccountsCompletionThreshold(int threshold) {
+        mThreshold = threshold;
+        if (isPermissionGranted()) {
+            mAccountsAutocomplete.setThreshold(mThreshold);
+            invalidate();
+            requestLayout();
+        }
     }
 
     public void setText(String text) {

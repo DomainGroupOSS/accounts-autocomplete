@@ -40,10 +40,11 @@ public class MainActivity extends AppCompatActivity {
         mAutoCompleteWithPrefill = (AccountsAutoCompleteTextView) findViewById(R.id.accounts_autocomplete_prefill);
         mAutoCompleteWithPrefill.setParentActivity(this);
 
-        List<String> emailOptions = new ArrayList<>();
-        emailOptions.add("my_email@gmail.com");
-        emailOptions.add("feedback@domain.com.au");
-        mAutoCompleteWithPrefill.setEmailOptions(emailOptions, true);
+        List<String> priorityList = new ArrayList<>();
+        priorityList.add("my_email@gmail.com");
+        priorityList.add("feedback@domain.com.au");
+        mAutoCompleteWithPrefill.setEmailOptions(priorityList, true);
+
     }
 
     @Override
