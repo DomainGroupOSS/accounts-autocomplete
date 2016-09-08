@@ -54,7 +54,8 @@ import au.com.domain.library.R;
 
 public class AccountsAutoCompleteTextView extends TextInputLayout {
 
-    public static final int REQUEST_CODE = 1000;
+    private static final int REQUEST_CODE = 56951;
+
     private List<String> mEmails;
     private List<String> mPriorityList;
     private boolean mAllowPrefill;
@@ -65,6 +66,7 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
 
     private int mThreshold;
     private String mCurrentText;
+
 
     public AccountsAutoCompleteTextView(Context context) {
         super(context);
@@ -202,13 +204,34 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
                     throw new IllegalStateException("No calling Activity or Fragment declared. Call either setParentActivity() or setParentFragment().");
                 }
 
+                int requestCode = getRequestCodeForView();
                 if (mActivity != null) {
-                    ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.GET_ACCOUNTS}, REQUEST_CODE);
+                    ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.GET_ACCOUNTS}, requestCode);
                 } else {
-                    mFragment.requestPermissions(new String[]{Manifest.permission.GET_ACCOUNTS}, REQUEST_CODE);
+                    mFragment.requestPermissions(new String[]{Manifest.permission.GET_ACCOUNTS}, requestCode);
                 }
             }
         });
+    }
+
+
+    /**
+     *
+     * Takes last 16 bits of view ID and combines that with #REQUEST_CODE in
+     * attempt to generate a unique permission request code for this view.
+     *
+     * Helps to prevent multiple autocompletes on the same screen responding to a single
+     * permission request result callback.
+     *
+     * TODO: Returned value MIGHT clash with existing request codes on a client app.
+     * Allow a configuration option to override this? As a workaround clients should be able
+     * to extend the class and override the method's return value (thus it is intentionally,
+     * left public).
+     *
+     * @return a XOR product of #REQUEST_CODE and last 16 bits of current view ID.
+     */
+    public int getRequestCodeForView() {
+        return REQUEST_CODE ^ (getId() << 16 >> 16);
     }
 
     /**
@@ -219,28 +242,31 @@ public class AccountsAutoCompleteTextView extends TextInputLayout {
      * @param grantResults
      */
     public void onPermissionResponse(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        boolean granted = REQUEST_CODE == requestCode && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+        int requestCodeForView = getRequestCodeForView();
+        if (requestCode == requestCodeForView) {
+            boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
 
-        if (granted) {
-            setAccountOptions();
-            mAccountsAutocomplete.showDropDown();
-        } else {
-
-            if (mActivity == null && mFragment == null) {
-                throw new IllegalStateException("No calling Activity or Fragment declared. Call either setParentActivity() or setParentFragment().");
-            }
-
-            boolean shouldShowRationale;
-            // This will return TRUE if te user has previously denied a request
-            // On subsequent times that we request the permission and the user chooses "Don't ask again", it will return FALSE
-            if (mActivity != null) {
-                shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(mActivity, Manifest.permission.GET_ACCOUNTS);
+            if (granted) {
+                setAccountOptions();
+                mAccountsAutocomplete.showDropDown();
             } else {
-                shouldShowRationale = mFragment.shouldShowRequestPermissionRationale(Manifest.permission.GET_ACCOUNTS);
-            }
 
-            if (!shouldShowRationale) {
-                mAccountsAutocomplete.setAdapter(mAdapter = null);
+                if (mActivity == null && mFragment == null) {
+                    throw new IllegalStateException("No calling Activity or Fragment declared. Call either setParentActivity() or setParentFragment().");
+                }
+
+                boolean shouldShowRationale;
+                // This will return TRUE if the user has previously denied a request
+                // On subsequent times that we request the permission and the user chooses "Don't ask again", it will return FALSE
+                if (mActivity != null) {
+                    shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(mActivity, Manifest.permission.GET_ACCOUNTS);
+                } else {
+                    shouldShowRationale = mFragment.shouldShowRequestPermissionRationale(Manifest.permission.GET_ACCOUNTS);
+                }
+
+                if (!shouldShowRationale) {
+                    mAccountsAutocomplete.setAdapter(mAdapter = null);
+                }
             }
         }
     }
