@@ -12,6 +12,11 @@ android {
         textReport true
         textOutput 'stdout'
     }
+
+    lintOptions {
+        textReport true
+        textOutput 'stdout'
+    }
 }
 
 ext {
